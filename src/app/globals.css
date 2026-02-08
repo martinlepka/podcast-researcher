@@ -1,0 +1,53 @@
+/**
+ * Event Analyzer - Global Styles
+ * Description: Cyberpunk design system for Event Analyzer
+ * Project: Event Analyzer
+ * Author: MartinL
+ * Created: 2026-02-07
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --background: 210 20% 98%;
+  --foreground: 220 20% 20%;
+  --primary: 160 80% 40%;
+  --primary-foreground: 0 0% 100%;
+  --neon-cyan: #0891b2;
+  --neon-green: #059669;
+  --neon-orange: #ea580c;
+  --neon-purple: #7c3aed;
+  --neon-magenta: #db2777;
+}
+
+html { font-size: 14px; }
+
+body {
+  background: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(210 25% 96%) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  font-family: 'JetBrains Mono', monospace;
+  color: hsl(var(--foreground));
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(5, 150, 105, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(5, 150, 105, 0.02) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.font-cyber { font-family: 'Orbitron', sans-serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: hsl(210 20% 95%); }
+::-webkit-scrollbar-thumb { background: hsl(210 15% 75%); border-radius: 3px; }
+::selection { background: rgba(5, 150, 105, 0.2); }
