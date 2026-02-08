@@ -863,11 +863,11 @@ export default function PodcastResearcher() {
                     </div>
 
                     {/* Full Analysis */}
-                    {report?.fullAnalysis && (
+                    {report?.fullAnalysis && typeof report.fullAnalysis === 'string' && (
                       <div className="bg-[hsl(210,20%,98%)] rounded-xl border border-[hsl(210,20%,90%)] p-5">
                         <h3 className="font-cyber text-sm font-bold text-[hsl(220,20%,20%)] mb-3">Full Analysis</h3>
                         <div className="text-sm text-[hsl(220,10%,40%)] whitespace-pre-wrap">
-                          {report.fullAnalysis as string}
+                          {report.fullAnalysis}
                         </div>
                       </div>
                     )}
