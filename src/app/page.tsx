@@ -8,7 +8,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Mic,
   Link as LinkIcon,
@@ -252,6 +252,12 @@ export default function PodcastResearcher() {
       ? Math.round(podcasts.reduce((sum, p) => sum + (p.overall_score || 0), 0) / podcasts.length)
       : 0
   };
+
+  // Derived values for selected podcast modal
+  const selectedReport = selectedPodcast?.full_report as Record<string, string> | null;
+  const selectedRecConfig = selectedPodcast ? getRecommendationConfig(selectedPodcast.recommendation) : null;
+  const selectedStatusConfig = selectedPodcast ? STATUS_CONFIG[selectedPodcast.status] : null;
+  const fullAnalysisText = selectedReport?.fullAnalysis ?? null;
 
   return (
     <div className="min-h-screen relative z-10">
@@ -668,19 +674,13 @@ export default function PodcastResearcher() {
       )}
 
       {/* Podcast Detail Modal */}
-      {selectedPodcast && (
+      {selectedPodcast && selectedRecConfig && selectedStatusConfig && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedPodcast(null)}>
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" />
           <div
             className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {(() => {
-              const report = selectedPodcast.full_report as Record<string, unknown> | null;
-              const recConfig = getRecommendationConfig(selectedPodcast.recommendation);
-              const statusConfig = STATUS_CONFIG[selectedPodcast.status];
-
-              return (
                 <>
                   <div className="p-6 border-b border-[hsl(210,20%,92%)] flex items-center justify-between sticky top-0 bg-white z-10">
                     <div>
@@ -709,19 +709,19 @@ export default function PodcastResearcher() {
                     <div className="flex gap-4">
                       <div
                         className="flex-1 rounded-xl border-2 p-6"
-                        style={{ borderColor: recConfig.color, background: recConfig.bg }}
+                        style={{ borderColor: selectedRecConfig.color, background: selectedRecConfig.bg }}
                       >
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-sm font-medium text-[hsl(220,10%,40%)]">Overall Score</div>
-                            <div className="text-5xl font-cyber font-bold" style={{ color: recConfig.color }}>
+                            <div className="text-5xl font-cyber font-bold" style={{ color: selectedRecConfig.color }}>
                               {selectedPodcast.overall_score ?? '-'}
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="flex items-center gap-2" style={{ color: recConfig.color }}>
-                              <recConfig.icon className="h-8 w-8" />
-                              <div className="text-lg font-bold">{recConfig.label}</div>
+                            <div className="flex items-center gap-2" style={{ color: selectedRecConfig.color }}>
+                              <selectedRecConfig.icon className="h-8 w-8" />
+                              <div className="text-lg font-bold">{selectedRecConfig.label}</div>
                             </div>
                           </div>
                         </div>
@@ -734,7 +734,7 @@ export default function PodcastResearcher() {
                           value={selectedPodcast.status}
                           onChange={(e) => handleStatusChange(selectedPodcast.id, e.target.value as PodcastStatus)}
                           className="w-full px-3 py-2 border border-[hsl(210,20%,88%)] rounded-lg text-sm"
-                          style={{ background: statusConfig.bg, color: statusConfig.color }}
+                          style={{ background: selectedStatusConfig.bg, color: selectedStatusConfig.color }}
                         >
                           {Object.entries(STATUS_CONFIG).map(([key, config]) => (
                             <option key={key} value={key}>{config.label}</option>
@@ -768,11 +768,11 @@ export default function PodcastResearcher() {
                         <div className="text-sm text-[hsl(220,10%,45%)]">
                           {selectedPodcast.audience_description || 'Not analyzed'}
                         </div>
-                        {selectedPodcast.audience_size && (
+                        {selectedPodcast.audience_size ? (
                           <div className="text-xs text-[hsl(220,10%,55%)] mt-1">
                             Size: {selectedPodcast.audience_size}
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
 
@@ -863,11 +863,11 @@ export default function PodcastResearcher() {
                     </div>
 
                     {/* Full Analysis */}
-                    {report?.fullAnalysis && typeof report.fullAnalysis === 'string' && (
+                    {fullAnalysisText && (
                       <div className="bg-[hsl(210,20%,98%)] rounded-xl border border-[hsl(210,20%,90%)] p-5">
                         <h3 className="font-cyber text-sm font-bold text-[hsl(220,20%,20%)] mb-3">Full Analysis</h3>
                         <div className="text-sm text-[hsl(220,10%,40%)] whitespace-pre-wrap">
-                          {report.fullAnalysis}
+                          {fullAnalysisText}
                         </div>
                       </div>
                     )}
@@ -882,8 +882,6 @@ export default function PodcastResearcher() {
                     </button>
                   </div>
                 </>
-              );
-            })()}
           </div>
         </div>
       )}
