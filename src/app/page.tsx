@@ -69,6 +69,12 @@ export default function PodcastResearcher() {
   const [formCategory, setFormCategory] = useState<PodcastCategory>('finance');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState<{
+    stage: string;
+    message: string;
+    progress: number;
+    detail?: string;
+  } | null>(null);
 
   // View state
   const [showForm, setShowForm] = useState(false);
@@ -113,9 +119,10 @@ export default function PodcastResearcher() {
 
     setIsAnalyzing(true);
     setError(null);
+    setAnalysisProgress({ stage: 'starting', message: 'Starting research...', progress: 0 });
 
     try {
-      const response = await fetch('/api/analyze', {
+      const response = await fetch('/api/analyze-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,7 +139,44 @@ export default function PodcastResearcher() {
         throw new Error(errorData.error || 'Analysis failed');
       }
 
-      const data = await response.json();
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response stream');
+
+      const decoder = new TextDecoder();
+      let resultData: { id?: string } | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const event = JSON.parse(line.slice(6));
+              setAnalysisProgress({
+                stage: event.stage,
+                message: event.message,
+                progress: event.progress,
+                detail: event.detail
+              });
+
+              if (event.stage === 'complete' && event.result) {
+                resultData = event.result;
+              }
+
+              if (event.stage === 'error') {
+                throw new Error(event.detail || 'Analysis failed');
+              }
+            } catch (parseError) {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+
       await loadPodcasts();
       setShowForm(false);
       setPodcastName('');
@@ -140,12 +184,15 @@ export default function PodcastResearcher() {
       setHostName('');
       setPodcastDescription('');
 
-      const newPodcast = await podcastApi.getById(data.id);
-      if (newPodcast) setSelectedPodcast(newPodcast);
+      if (resultData?.id) {
+        const newPodcast = await podcastApi.getById(resultData.id);
+        if (newPodcast) setSelectedPodcast(newPodcast);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Analysis failed');
     } finally {
       setIsAnalyzing(false);
+      setAnalysisProgress(null);
     }
   };
 
@@ -641,6 +688,66 @@ export default function PodcastResearcher() {
                   {error}
                 </div>
               )}
+
+              {/* Progress Display */}
+              {isAnalyzing && analysisProgress && (
+                <div className="p-5 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="relative">
+                      <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
+                      <div className="absolute inset-0 h-6 w-6 rounded-full border-2 border-purple-200" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-purple-900">{analysisProgress.message}</div>
+                      {analysisProgress.detail && (
+                        <div className="text-sm text-purple-600">{analysisProgress.detail}</div>
+                      )}
+                    </div>
+                    <div className="text-sm font-mono font-bold text-purple-700">
+                      {analysisProgress.progress}%
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="h-2 bg-purple-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500 ease-out"
+                      style={{ width: `${analysisProgress.progress}%` }}
+                    />
+                  </div>
+
+                  {/* Stage indicators */}
+                  <div className="flex justify-between mt-3 text-xs">
+                    {[
+                      { key: 'searching', label: 'Search', icon: '🔍' },
+                      { key: 'audience', label: 'Audience', icon: '👥' },
+                      { key: 'contact', label: 'Contact', icon: '📧' },
+                      { key: 'strategy', label: 'Strategy', icon: '🎯' },
+                      { key: 'saving', label: 'Save', icon: '💾' },
+                    ].map((stage) => {
+                      const stageOrder = ['searching', 'audience', 'contact', 'strategy', 'finalizing', 'saving', 'complete'];
+                      const currentIndex = stageOrder.indexOf(analysisProgress.stage);
+                      const stageIndex = stageOrder.indexOf(stage.key);
+                      const isActive = stage.key === analysisProgress.stage;
+                      const isComplete = stageIndex < currentIndex;
+
+                      return (
+                        <div
+                          key={stage.key}
+                          className={`flex flex-col items-center gap-1 transition-all ${
+                            isActive ? 'text-purple-700 scale-110' : isComplete ? 'text-green-600' : 'text-gray-400'
+                          }`}
+                        >
+                          <span className="text-base">{isComplete ? '✓' : stage.icon}</span>
+                          <span className={`font-medium ${isActive ? 'text-purple-700' : ''}`}>
+                            {stage.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-6 border-t border-[hsl(210,20%,92%)] flex justify-end gap-3">
@@ -659,7 +766,7 @@ export default function PodcastResearcher() {
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Researching...
+                    {analysisProgress?.message || 'Researching...'}
                   </>
                 ) : (
                   <>
