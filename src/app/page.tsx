@@ -72,6 +72,11 @@ export default function PodcastResearcher() {
   const [mediaKit, setMediaKit] = useState<File | null>(null);
   const [mediaKitPreview, setMediaKitPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // Enhance existing podcast state
+  const [enhanceMediaKit, setEnhanceMediaKit] = useState<File | null>(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhanceProgress, setEnhanceProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState<{
     stage: string;
@@ -214,6 +219,66 @@ export default function PodcastResearcher() {
     } finally {
       setIsAnalyzing(false);
       setAnalysisProgress(null);
+    }
+  };
+
+  // Enhance existing podcast with media kit
+  const handleEnhanceWithMediaKit = async () => {
+    if (!selectedPodcast || !enhanceMediaKit) return;
+
+    setIsEnhancing(true);
+    setEnhanceProgress('Processing media kit...');
+
+    try {
+      // Convert media kit to base64
+      const arrayBuffer = await enhanceMediaKit.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const mediaKitBase64 = btoa(binary);
+
+      setEnhanceProgress('Analyzing with media kit data...');
+
+      const response = await fetch('/api/enhance-podcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          podcastId: selectedPodcast.id,
+          podcastName: selectedPodcast.podcast_name,
+          hostName: selectedPodcast.host_name,
+          podcastUrl: selectedPodcast.podcast_url,
+          category: selectedPodcast.podcast_category,
+          mediaKit: mediaKitBase64,
+          mediaKitFileName: enhanceMediaKit.name
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Enhancement failed');
+      }
+
+      setEnhanceProgress('Saving updated analysis...');
+
+      const result = await response.json();
+
+      // Refresh the podcast data
+      const updated = await podcastApi.getById(selectedPodcast.id);
+      if (updated) {
+        setSelectedPodcast(updated);
+        setPodcasts(prev => prev.map(p => p.id === updated.id ? updated : p));
+      }
+
+      setEnhanceMediaKit(null);
+      setEnhanceProgress(null);
+      alert('Podcast enhanced with media kit data!');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Enhancement failed');
+    } finally {
+      setIsEnhancing(false);
+      setEnhanceProgress(null);
     }
   };
 
@@ -931,6 +996,73 @@ export default function PodcastResearcher() {
                             <option key={key} value={key}>{config.label}</option>
                           ))}
                         </select>
+                      </div>
+                    </div>
+
+                    {/* Enhance with Media Kit */}
+                    <div className="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/50 p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                            <FileText className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-purple-900">Enhance with Media Kit</div>
+                            <div className="text-xs text-purple-600">
+                              Upload the podcast's media kit for more accurate audience data, pricing, and contacts
+                            </div>
+                          </div>
+                        </div>
+                        {!enhanceMediaKit ? (
+                          <label className={`px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 cursor-pointer transition-colors ${isEnhancing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <Upload className="h-4 w-4 inline mr-2" />
+                            Upload PDF
+                            <input
+                              type="file"
+                              accept=".pdf,application/pdf"
+                              className="hidden"
+                              disabled={isEnhancing}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (file.size > 10 * 1024 * 1024) {
+                                    alert('Media kit must be under 10MB');
+                                    return;
+                                  }
+                                  setEnhanceMediaKit(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm text-purple-700 bg-purple-100 px-3 py-1 rounded-full">
+                              {enhanceMediaKit.name}
+                            </div>
+                            {isEnhancing ? (
+                              <div className="flex items-center gap-2 text-purple-600">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="text-sm">{enhanceProgress}</span>
+                              </div>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={handleEnhanceWithMediaKit}
+                                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-colors"
+                                >
+                                  <Sparkles className="h-4 w-4 inline mr-1" />
+                                  Enhance
+                                </button>
+                                <button
+                                  onClick={() => setEnhanceMediaKit(null)}
+                                  className="p-2 hover:bg-purple-100 rounded-lg"
+                                >
+                                  <X className="h-4 w-4 text-purple-600" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
