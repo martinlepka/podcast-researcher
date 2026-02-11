@@ -35,7 +35,9 @@ import {
   Copy,
   Clock,
   Briefcase,
-  BarChart3
+  BarChart3,
+  Upload,
+  FileText
 } from 'lucide-react';
 import { podcastApi, PodcastAnalysis, PodcastCategory, PodcastStatus } from '@/lib/supabase';
 
@@ -67,6 +69,8 @@ export default function PodcastResearcher() {
   const [hostName, setHostName] = useState('');
   const [podcastDescription, setPodcastDescription] = useState('');
   const [formCategory, setFormCategory] = useState<PodcastCategory>('finance');
+  const [mediaKit, setMediaKit] = useState<File | null>(null);
+  const [mediaKitPreview, setMediaKitPreview] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState<{
@@ -122,6 +126,19 @@ export default function PodcastResearcher() {
     setAnalysisProgress({ stage: 'starting', message: 'Starting research...', progress: 0 });
 
     try {
+      // Convert media kit to base64 if present
+      let mediaKitBase64: string | undefined;
+      if (mediaKit) {
+        setAnalysisProgress({ stage: 'uploading', message: 'Processing media kit...', progress: 5 });
+        const arrayBuffer = await mediaKit.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        mediaKitBase64 = btoa(binary);
+      }
+
       const response = await fetch('/api/analyze-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -130,7 +147,9 @@ export default function PodcastResearcher() {
           podcastUrl: podcastUrl || undefined,
           hostName: hostName || undefined,
           podcastDescription: podcastDescription || undefined,
-          category: formCategory
+          category: formCategory,
+          mediaKit: mediaKitBase64 || undefined,
+          mediaKitFileName: mediaKit?.name || undefined
         })
       });
 
@@ -183,6 +202,8 @@ export default function PodcastResearcher() {
       setPodcastUrl('');
       setHostName('');
       setPodcastDescription('');
+      setMediaKit(null);
+      setMediaKitPreview(null);
 
       if (resultData?.id) {
         const newPodcast = await podcastApi.getById(resultData.id);
@@ -680,6 +701,69 @@ export default function PodcastResearcher() {
                   className="w-full px-4 py-3 border border-[hsl(210,20%,88%)] rounded-lg focus:outline-none focus:border-purple-500 resize-none"
                   disabled={isAnalyzing}
                 />
+              </div>
+
+              {/* Media Kit Upload */}
+              <div>
+                <label className="block text-sm font-medium text-[hsl(220,20%,30%)] mb-2">
+                  <FileText className="h-4 w-4 inline mr-1" /> Media Kit (PDF)
+                </label>
+                <div className="relative">
+                  {!mediaKit ? (
+                    <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[hsl(210,20%,88%)] rounded-lg cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-colors ${isAnalyzing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-500">
+                          <span className="font-medium text-purple-600">Upload media kit</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">PDF (max 10MB)</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        disabled={isAnalyzing}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 10 * 1024 * 1024) {
+                              setError('Media kit must be under 10MB');
+                              return;
+                            }
+                            setMediaKit(file);
+                            setMediaKitPreview(file.name);
+                          }
+                        }}
+                      />
+                    </label>
+                  ) : (
+                    <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                          <FileText className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-purple-900">{mediaKitPreview}</p>
+                          <p className="text-xs text-purple-600">{(mediaKit.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMediaKit(null);
+                          setMediaKitPreview(null);
+                        }}
+                        disabled={isAnalyzing}
+                        className="p-2 hover:bg-purple-100 rounded-lg transition-colors"
+                      >
+                        <X className="h-4 w-4 text-purple-600" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Upload podcast's media kit for more accurate analysis (audience demographics, sponsorship rates, etc.)
+                </p>
               </div>
 
               {error && (

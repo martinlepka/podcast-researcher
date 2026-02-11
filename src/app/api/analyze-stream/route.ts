@@ -65,7 +65,9 @@ export async function POST(request: NextRequest) {
     podcastUrl,
     hostName,
     podcastDescription,
-    category
+    category,
+    mediaKit,           // base64 encoded PDF
+    mediaKitFileName
   } = body
 
   if (!podcastName) {
@@ -82,15 +84,19 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  const hasMediaKit = !!mediaKit
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
         // Stage 1: Searching for podcast information
         sendEvent(controller, {
           stage: 'searching',
-          message: 'Searching for podcast information...',
+          message: hasMediaKit ? 'Analyzing media kit...' : 'Searching for podcast information...',
           progress: 10,
-          detail: `Looking up "${podcastName}" across podcast databases`
+          detail: hasMediaKit
+            ? `Processing "${mediaKitFileName}" for audience data`
+            : `Looking up "${podcastName}" across podcast databases`
         })
         await new Promise(r => setTimeout(r, 500))
 
@@ -99,11 +105,13 @@ export async function POST(request: NextRequest) {
           stage: 'audience',
           message: 'Analyzing audience fit...',
           progress: 25,
-          detail: 'Evaluating listener demographics and ICP match'
+          detail: hasMediaKit
+            ? 'Extracting demographics from media kit'
+            : 'Evaluating listener demographics and ICP match'
         })
 
         // Stage 3: Make the actual API call
-        const prompt = buildAnalysisPrompt(podcastName, hostName, podcastUrl, podcastDescription, category)
+        const prompt = buildAnalysisPrompt(podcastName, hostName, podcastUrl, podcastDescription, category, hasMediaKit)
 
         sendEvent(controller, {
           stage: 'contact',
@@ -112,11 +120,27 @@ export async function POST(request: NextRequest) {
           detail: 'Finding host details, email, and best outreach method'
         })
 
+        // Build request content - include PDF if provided
+        const contentParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = []
+
+        // Add media kit PDF first if provided
+        if (mediaKit) {
+          contentParts.push({
+            inlineData: {
+              mimeType: 'application/pdf',
+              data: mediaKit
+            }
+          })
+        }
+
+        // Add the text prompt
+        contentParts.push({ text: prompt })
+
         const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{ parts: contentParts }],
             generationConfig: {
               temperature: 0.3,
               maxOutputTokens: 4096,
@@ -272,12 +296,32 @@ function buildAnalysisPrompt(
   hostName?: string,
   podcastUrl?: string,
   podcastDescription?: string,
-  category?: string
+  category?: string,
+  hasMediaKit?: boolean
 ): string {
+  const mediaKitInstructions = hasMediaKit ? `
+
+## IMPORTANT: MEDIA KIT PROVIDED
+A PDF media kit has been uploaded for this podcast. This contains ACCURATE, VERIFIED information directly from the podcast including:
+- Actual audience demographics and size
+- Download/listener statistics
+- Sponsorship rates and packages
+- Host bios and contact information
+- Past sponsors and guests
+
+**PRIORITIZE the media kit data over web research** for:
+- Audience size and demographics
+- Pricing/sponsorship costs
+- Contact information
+- Listener statistics
+
+Extract and use the exact numbers from the media kit when available.
+` : ''
+
   return `You are a podcast research expert helping Keboola find the best podcasts for their CEO/founder to appear on.
 
 ${KEBOOLA_CONTEXT}
-
+${mediaKitInstructions}
 Analyze this podcast for guest appearance potential:
 
 PODCAST NAME: ${podcastName}
