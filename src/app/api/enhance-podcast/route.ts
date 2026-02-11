@@ -149,6 +149,17 @@ Respond in JSON format:
       { text: prompt }
     ]
 
+    // Check if mediaKit is too large (Gemini has limits around 20MB)
+    const estimatedSize = mediaKit.length * 0.75 // base64 is ~33% larger
+    if (estimatedSize > 15 * 1024 * 1024) { // 15MB limit
+      return NextResponse.json(
+        { error: 'Media kit PDF is too large. Please use a file under 15MB.' },
+        { status: 400 }
+      )
+    }
+
+    console.log(`Sending ${(mediaKit.length / 1024).toFixed(0)}KB base64 to Gemini...`)
+
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -163,22 +174,48 @@ Respond in JSON format:
     })
 
     if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Gemini API error: ${error}`)
+      const errorText = await response.text()
+      console.error('Gemini API error:', response.status, errorText)
+
+      // Provide more specific error messages
+      if (response.status === 413) {
+        return NextResponse.json(
+          { error: 'Media kit PDF is too large for analysis. Try a smaller file.' },
+          { status: 400 }
+        )
+      }
+      if (response.status === 429) {
+        return NextResponse.json(
+          { error: 'API rate limit exceeded. Please wait a moment and try again.' },
+          { status: 429 }
+        )
+      }
+      return NextResponse.json(
+        { error: `AI analysis failed: ${errorText.substring(0, 200)}` },
+        { status: 500 }
+      )
     }
 
     const data = await response.json()
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (!text) {
-      throw new Error('No response from Gemini')
+      console.error('No text in Gemini response:', JSON.stringify(data))
+      return NextResponse.json(
+        { error: 'No response from AI. The PDF may not be readable.' },
+        { status: 500 }
+      )
     }
 
     let analysis
     try {
       analysis = JSON.parse(text)
-    } catch {
-      throw new Error('Failed to parse analysis response')
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response:', text.substring(0, 500))
+      return NextResponse.json(
+        { error: 'AI response was not valid JSON. Please try again.' },
+        { status: 500 }
+      )
     }
 
     // Update the existing podcast record

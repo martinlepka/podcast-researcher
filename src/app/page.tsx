@@ -256,13 +256,27 @@ export default function PodcastResearcher() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Enhancement failed');
+        const errorText = await response.text();
+        let errorMessage = 'Enhancement failed';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // If it's not JSON, use the text directly
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       setEnhanceProgress('Saving updated analysis...');
 
-      const result = await response.json();
+      const resultText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(resultText);
+      } catch {
+        throw new Error('Invalid response from server');
+      }
 
       // Refresh the podcast data
       const updated = await podcastApi.getById(selectedPodcast.id);
@@ -781,7 +795,7 @@ export default function PodcastResearcher() {
                         <p className="text-sm text-gray-500">
                           <span className="font-medium text-purple-600">Upload media kit</span> or drag and drop
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">PDF (max 10MB)</p>
+                        <p className="text-xs text-gray-400 mt-1">PDF (max 3MB)</p>
                       </div>
                       <input
                         type="file"
@@ -791,8 +805,9 @@ export default function PodcastResearcher() {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            if (file.size > 10 * 1024 * 1024) {
-                              setError('Media kit must be under 10MB');
+                            // Vercel has 4.5MB body limit, base64 adds ~33%, so limit to ~3MB
+                            if (file.size > 3 * 1024 * 1024) {
+                              setError('Media kit must be under 3MB due to API limits. Please compress the PDF.');
                               return;
                             }
                             setMediaKit(file);
@@ -1025,8 +1040,9 @@ export default function PodcastResearcher() {
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  if (file.size > 10 * 1024 * 1024) {
-                                    alert('Media kit must be under 10MB');
+                                  // Vercel has 4.5MB body limit, base64 adds ~33%, so limit to ~3MB
+                                  if (file.size > 3 * 1024 * 1024) {
+                                    alert('Media kit must be under 3MB due to API limits. Please compress the PDF or use a smaller version.');
                                     return;
                                   }
                                   setEnhanceMediaKit(file);
