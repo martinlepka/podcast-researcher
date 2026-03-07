@@ -1,3 +1,13 @@
+<!--
+Script: CLAUDE.md
+Description: Claude Code instructions for Podcast Researcher — AI-powered podcast analysis tool
+Project: podcast-researcher
+Linear Issue: —
+Related Files: src/, ../Genesis/CLAUDE.md, ../marketing-ops-hub/CLAUDE.md
+Author: MartinL
+Created: 2026-03-07
+-->
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code when working with this repository.
@@ -62,3 +72,11 @@ Reads from `podcast_analyses` table in Genesis Supabase project.
 - Event Analyzer (sibling)
 - Genesis Dashboard (parent)
 - Marketing Ops Hub (router)
+
+---
+
+## Linear Integration
+
+- **Team**: Marketing (`1c465552-ce88-47aa-934e-abf1aab72cb5`)
+- **Project**: 900 MQLs (`b904dbba-1eb6-4bc6-84de-4609bc48c192`)
+- Reference Linear issues in commits: `type(scope): description [ISSUE-ID]`
