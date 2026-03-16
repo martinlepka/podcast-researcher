@@ -413,9 +413,11 @@ export default function PodcastResearcher() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                <Mic className="h-5 w-5 text-white" />
-              </div>
+              <img
+                src="https://cdn.prod.website-files.com/5e21dc6f4c5acf29c35bb32c/69720f9d7eb6380f034f2bd7_keboola_logo_octopus.png"
+                alt="Keboola"
+                className="h-8"
+              />
               <div>
                 <h1 className="font-cyber text-xl font-bold text-[hsl(220,20%,20%)] tracking-wide">
                   PODCAST RESEARCHER

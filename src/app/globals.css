@@ -1,53 +1,151 @@
 /**
- * Event Analyzer - Global Styles
- * Description: Cyberpunk design system for Event Analyzer
- * Project: Event Analyzer
+ * Podcast Researcher - Global Styles
+ * Description: Keboola Swiss design system for Podcast Researcher
+ * Project: Podcast Researcher
  * Author: MartinL
  * Created: 2026-02-07
+ * Updated: 2026-03-10 — Swiss design conversion
  */
-
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  --background: 210 20% 98%;
-  --foreground: 220 20% 20%;
-  --primary: 160 80% 40%;
-  --primary-foreground: 0 0% 100%;
-  --neon-cyan: #0891b2;
-  --neon-green: #059669;
-  --neon-orange: #ea580c;
-  --neon-purple: #7c3aed;
-  --neon-magenta: #db2777;
+  --background: 0 0% 98%;
+  --foreground: 0 0% 9%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 9%;
+  --primary: 0 0% 4%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 211 95% 50%;
+  --radius: 0.375rem;
+  --chart-1: 211 95% 50%;
+  --chart-2: 0 0% 9%;
+  --chart-3: 0 0% 45%;
+  --chart-4: 142 71% 45%;
+  --chart-5: 48 96% 53%;
+
+  /* Keboola Brand Colors */
+  --keboola-blue: #097cf7;
+  --keboola-yellow: #ffc306;
+  --keboola-purple: #905bff;
+  --dark-navy: #071729;
+  --navy: #032040;
+  --dark-slate: #233141;
+  --charcoal: #273543;
+  --text-primary: #273543;
+  --text-paragraph: #3f454f;
+  --text-secondary: #6b7c8f;
+  --bg-white: #ffffff;
+  --bg-light-1: #f4f7fa;
+  --bg-light-2: #f7f7f9;
+  --bg-light-blue: #f3f6fc;
+  --bg-highlight: #e4f1ff;
+  --success: #01a44a;
+  --error: #e00025;
+  --blue-shadow: #0059b7;
 }
 
-html { font-size: 14px; }
+html {
+  font-size: 14px;
+}
 
 body {
-  background: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(210 25% 96%) 100%);
-  background-attachment: fixed;
+  background-color: hsl(0 0% 98%);
   min-height: 100vh;
-  font-family: 'JetBrains Mono', monospace;
-  color: hsl(var(--foreground));
+  font-family: var(--font-montserrat), 'Montserrat', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  color: hsl(0 0% 9%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
 }
 
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(5, 150, 105, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(5, 150, 105, 0.02) 1px, transparent 1px);
-  background-size: 20px 20px;
-  pointer-events: none;
-  z-index: 0;
+/* Keboola brand mono utility */
+.font-mono {
+  font-family: var(--font-inconsolata), 'Inconsolata', 'SF Mono', 'Fira Code', monospace;
 }
 
-.font-cyber { font-family: 'Orbitron', sans-serif; }
-.font-mono { font-family: 'JetBrains Mono', monospace; }
+/* Keboola brand heading utility (replaces .font-cyber) */
+.font-cyber {
+  font-family: var(--font-montserrat), 'Montserrat', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
 
+/* Selection */
+::selection {
+  background: rgba(9, 124, 247, 0.15);
+}
+
+/* Scrollbar - subtle */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: hsl(210 20% 95%); }
-::-webkit-scrollbar-thumb { background: hsl(210 15% 75%); border-radius: 3px; }
-::selection { background: rgba(5, 150, 105, 0.2); }
+::-webkit-scrollbar-track { background: #fafafa; }
+::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+
+/* Swiss card styles (replaces cyber-card) */
+.cyber-card, [class*="cyber-card"] {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.1s ease;
+}
+
+.cyber-card:hover, [class*="cyber-card"]:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Swiss button (replaces cyber-btn) */
+.cyber-btn {
+  font-family: var(--font-montserrat), 'Montserrat', sans-serif;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.1s ease;
+}
+
+/* Swiss table (replaces cyber-table) */
+.cyber-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.cyber-table th {
+  background: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #737373;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.cyber-table td {
+  border-bottom: 1px solid #f5f5f5;
+  padding: 10px 12px;
+}
+
+/* Priority badges */
+.tier-p0 { background: #fef2f2; color: #dc2626; }
+.tier-p1 { background: #fff7ed; color: #ea580c; }
+.tier-p2 { background: #fefce8; color: #a16207; }
+.tier-p3 { background: #f5f5f5; color: #737373; }
+
+/* Status badges */
+.status-new { background: #edf5ff; color: #097cf7; }
+.status-working, .status-active { background: #f3f0ff; color: #905bff; }
+.status-done, .status-completed { background: #ecfdf5; color: #059669; }
+.status-rejected { background: #f5f5f5; color: #737373; }
