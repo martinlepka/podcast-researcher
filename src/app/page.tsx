@@ -409,20 +409,20 @@ export default function PodcastResearcher() {
   return (
     <div className="min-h-screen relative z-10">
       {/* Header */}
-      <header className="border-b border-[hsl(210,20%,90%)] bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <header className="sticky top-0 z-50 h-14 flex items-center border-b border-[#e5e5e5]" style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+        <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <img
                 src="https://cdn.prod.website-files.com/5e21dc6f4c5acf29c35bb32c/69720f9d7eb6380f034f2bd7_keboola_logo_octopus.png"
                 alt="Keboola"
-                className="h-8"
+                className="h-7"
               />
               <div>
-                <h1 className="font-cyber text-xl font-bold text-[hsl(220,20%,20%)] tracking-wide">
-                  PODCAST RESEARCHER
+                <h1 className="font-semibold text-base text-[#273543]">
+                  Podcast Researcher
                 </h1>
-                <p className="text-xs text-[hsl(220,10%,50%)] font-mono">
+                <p className="text-[10px] text-[#6b7c8f] font-mono leading-tight">
                   Find podcasts for CEO guest appearances
                 </p>
               </div>
