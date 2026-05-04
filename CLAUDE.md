@@ -73,6 +73,10 @@ Reads from `podcast_analyses` table in Genesis Supabase project.
 - Genesis Dashboard (parent)
 - Marketing Ops Hub (router)
 
+### Semantic Quality Gate
+
+After ANY data storage, enrichment, or research operation, verify not just data PRESENCE (NOT NULL, non-empty) but also **SEMANTIC QUALITY** — whether the data is actually useful for insights, outreach, and personalization. "NOT NULL" does not mean "has real data." Check for placeholders ("None found", "Not available"), empty JSON wrappers, thin/generic content, and numbers from wrong context. Data failing semantic quality must be cleaned, not counted as complete.
+
 ---
 
 ## Linear Integration
